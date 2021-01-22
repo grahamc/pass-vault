@@ -9,5 +9,6 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 dialoguer = "0.7"
+qrcode = { version = "0.12", default-features = false }
 structopt = "0.3"
 tempfile = "3.2"

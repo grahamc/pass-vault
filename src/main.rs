@@ -1,5 +1,7 @@
 use anyhow::{ensure, Context, Error};
 use dialoguer::Confirm;
+use qrcode::render::unicode;
+use qrcode::QrCode;
 use structopt::StructOpt;
 
 use std::{
@@ -94,21 +96,18 @@ fn genpass(secret: &str) -> Result<(), Error> {
 }
 
 fn qr(secret: &str) -> Result<(), Error> {
-    let mut cmd = process::Command::new("vault")
+    let output = process::Command::new("vault")
         .args(&["read", "-field=data", &format!("password-store/{}", secret)])
-        .stdout(Stdio::piped())
-        .spawn()?;
+        .output()?;
 
-    let mut stdout = cmd.stdout.take().context("no stdout")?;
+    let code = QrCode::new(output.stdout)?;
+    let image = code
+        .render::<unicode::Dense1x2>()
+        .dark_color(unicode::Dense1x2::Light)
+        .light_color(unicode::Dense1x2::Dark)
+        .build();
 
-    let process = process::Command::new("qrencode")
-        .args(&["-t", "utf8"])
-        .stdin(Stdio::piped())
-        .spawn()?;
-
-    let mut writer = process.stdin.as_ref().context("err stdin")?;
-
-    io::copy(&mut stdout, &mut writer)?;
+    println!("{}", image);
 
     Ok(())
 }
